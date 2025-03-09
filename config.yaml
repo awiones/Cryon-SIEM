@@ -1,0 +1,113 @@
+general:
+  name: Cryon SIEM
+  description: Security Information and Event Management System
+  version: 0.1.0
+
+logging:
+  level: info
+  file: cryon.log
+  verbose: false
+
+storage:
+  type: memory
+  # For SQLite
+  # type: sqlite
+  # path: cryon.db
+
+  # For PostgreSQL
+  # type: postgres
+  # host: localhost
+  # port: 5432
+  # username: cryonuser
+  # password: cryonpass
+  # database: cryonsiem
+
+sources:
+  - type: file
+    path: /var/log/auth.log
+    interval: 10
+
+  - type: file
+    path: /var/log/syslog
+    interval: 10
+
+  - type: syslog
+    host: 0.0.0.0
+    port: 10514
+    interval: 10 # Add interval for syslog source
+
+  # - type: winlog
+  #   path: Security
+  #   interval: 30
+
+  # - type: api
+  #   host: https://api.example.com/security-events
+  #   interval: 60
+  #   parameters:
+  #     apiKey: your-api-key
+
+rules:
+  - id: rule-001
+    name: Failed SSH Authentication
+    description: Detects failed SSH authentication attempts
+    severity: MEDIUM
+    type: regex
+    pattern: "Failed password for .* from .* port \\d+ ssh2"
+    enabled: true
+
+  - id: rule-002
+    name: Brute Force Attack
+    description: Detects potential brute force attacks
+    severity: HIGH
+    type: threshold
+    pattern: "Failed password"
+    threshold: 5
+    timeframe: 60
+    enabled: true
+
+  - id: rule-003
+    name: Root Login Attempt
+    description: Detects attempts to login as root
+    severity: HIGH
+    type: regex
+    pattern: "Failed password for root from"
+    enabled: true
+
+  - id: rule-004
+    name: New User Created
+    description: Detects when a new user is created
+    severity: MEDIUM
+    type: regex
+    pattern: "new user: name="
+    enabled: true
+
+  - id: rule-005
+    name: Sudo Command Execution
+    description: Detects sudo command execution
+    severity: LOW
+    type: regex
+    pattern: "sudo:.* COMMAND="
+    enabled: true
+
+  - id: rule-006
+    name: Multiple Authentication Failures Correlation
+    description: Correlates authentication failures across multiple sources
+    severity: CRITICAL
+    type: correlation
+    parameters:
+      timeWindow: "300"
+      minEvents: "10"
+      sources: "auth.log,syslog"
+    enabled: true
+
+authentication:
+  enabled: false
+  method: local
+  # keyFile: cert/key.pem
+  # certFile: cert/cert.pem
+
+api:
+  enabled: false
+  port: 8080
+  tls: false
+  # apiKey: your-api-key-here
